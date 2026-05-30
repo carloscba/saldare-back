@@ -1,5 +1,5 @@
 import { All, Controller, MethodNotAllowedException, Req } from '@nestjs/common';
-import { Request } from 'express';
+import type { Request } from 'express';
 
 @Controller('health')
 export class HealthController {
