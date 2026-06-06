@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: saldare-dev-db
+    environment:
+      POSTGRES_DB: saldare
+      POSTGRES_USER: saldare
+      POSTGRES_PASSWORD: saldare123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saldare -d saldare"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

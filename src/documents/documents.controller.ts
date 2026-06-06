@@ -15,9 +15,6 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { mkdirSync } from 'fs';
 import { FirebaseAuthGuard } from './guards/firebase-auth.guard';
 import { DocumentsService } from './documents.service';
 import { DocumentListQueryDto } from './dto/document-list-query.dto';
@@ -45,17 +42,6 @@ export class DocumentsController {
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (_req, _file, cb) => {
-          const uploadDir = process.env.UPLOAD_DIR ?? '/tmp/uploads';
-          mkdirSync(uploadDir, { recursive: true });
-          cb(null, uploadDir);
-        },
-        filename: (_req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
       limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE ?? '5242880', 10) },
     }),
   )

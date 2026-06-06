@@ -1,0 +1,43 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "openrouter/deepseek/deepseek-v4-flash",
+  "instructions": [".github/copilot-instructions.md"],
+  "command": {
+    "speckit": {
+      "description": "Show available spec-kit commands",
+      "template": "List all available spec-kit commands (/speckit-specify, /speckit-plan, /speckit-tasks, /speckit-implement, /speckit-clarify, /speckit-analyze, /speckit-constitution, /speckit-checklist) with a brief description of each."
+    },
+    "speckit-specify": {
+      "description": "Create or update a feature specification from a description",
+      "template": "Run the speckit.specify workflow: create or update a feature specification from a natural language description. First check .specify/feature.json for the active feature. Use .specify/scripts/bash/create-new-feature.sh if creating a new feature. Follow the full workflow in the agent file .opencode/agents/speckit-specify.md — create the spec directory, copy spec-template.md, fill in all sections, create checklists/requirements.md, and validate."
+    },
+    "speckit-plan": {
+      "description": "Generate an implementation plan for the active feature",
+      "template": "Run the speckit.plan workflow: execute .specify/scripts/bash/setup-plan.sh --json from repo root, load the spec and constitution, then generate research.md, data-model.md, contracts/, quickstart.md, and fill the plan.md template. Follow the full workflow in the agent file .opencode/agents/speckit-plan.md."
+    },
+    "speckit-tasks": {
+      "description": "Break the implementation plan into actionable tasks",
+      "template": "Run the speckit.tasks workflow: execute .specify/scripts/bash/setup-tasks.sh --json from repo root, load plan.md and spec.md, then generate tasks.md with organized task phases. Follow the full workflow in the agent file .opencode/agents/speckit-tasks.md."
+    },
+    "speckit-implement": {
+      "description": "Execute all tasks from tasks.md in order",
+      "template": "Run the speckit.implement workflow: execute .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks, load all artifacts, then implement each task phase-by-phase from tasks.md. Follow the full workflow in the agent file .opencode/agents/speckit-implement.md."
+    },
+    "speckit-clarify": {
+      "description": "Identify and resolve ambiguous areas in the feature spec",
+      "template": "Run the speckit.clarify workflow: run .specify/scripts/bash/check-prerequisites.sh --json --paths-only, load the spec, scan for ambiguities, then ask up to 5 targeted questions to resolve them. Follow the full workflow in the agent file .opencode/agents/speckit-clarify.md."
+    },
+    "speckit-analyze": {
+      "description": "Cross-artifact consistency check across spec, plan, and tasks",
+      "template": "Run the speckit.analyze workflow: run .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks, load spec.md, plan.md, tasks.md, and constitution.md, then produce a structured analysis report. Follow the full workflow in the agent file .opencode/agents/speckit-analyze.md."
+    },
+    "speckit-constitution": {
+      "description": "Create or update the project constitution",
+      "template": "Run the speckit.constitution workflow: load .specify/memory/constitution.md, identify placeholders, collect values, fill template, propagate changes to dependent templates. Follow the full workflow in the agent file .opencode/agents/speckit-constitution.md."
+    },
+    "speckit-checklist": {
+      "description": "Generate a custom requirements-quality checklist for the feature",
+      "template": "Run the speckit.checklist workflow: run .specify/scripts/bash/check-prerequisites.sh --json, load spec/plan/tasks context, then generate a checklist file in FEATURE_DIR/checklists/. Follow the full workflow in the agent file .opencode/agents/speckit-checklist.md."
+    }
+  }
+}
