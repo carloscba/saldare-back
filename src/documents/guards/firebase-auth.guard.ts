@@ -1,9 +1,19 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 
+let initialized = false;
+function ensureInitialized() {
+  if (!initialized) {
+    const projectId = process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
+    admin.initializeApp({ projectId });
+    initialized = true;
+  }
+}
+
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    ensureInitialized();
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
 

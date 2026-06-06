@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.gitignore
+.env
+.env.*
+*.md
+test
+coverage
+.eslintrc*
+.prettierrc*
+*fb-*.json
+*sa-key*.json
+Dockerfile
+.dockerignore

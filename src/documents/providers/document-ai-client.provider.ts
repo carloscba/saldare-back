@@ -7,14 +7,14 @@ export const DocumentAiClientFactory: FactoryProvider<DocumentAIClient> = {
     const { DocumentProcessorServiceClient } = require('@google-cloud/documentai');
 
     const client = new DocumentProcessorServiceClient({
-      apiEndpoint: 'us-central1-documentai.googleapis.com',
+      apiEndpoint: `${process.env.DOCUMENT_AI_PROCESSOR_LOCATION ?? 'us'}-documentai.googleapis.com`,
     });
 
     return {
       async processDocument(fileBuffer: Buffer, mimeType: string) {
         const projectId = process.env.DOCUMENT_AI_PROJECT_ID;
         const processorId = process.env.DOCUMENT_AI_PROCESSOR_ID;
-        const location = process.env.DOCUMENT_AI_PROCESSOR_LOCATION ?? 'us-central1';
+        const location = process.env.DOCUMENT_AI_PROCESSOR_LOCATION ?? 'us';
 
         const name = `projects/${projectId}/locations/${location}/processors/${processorId}`;
 
