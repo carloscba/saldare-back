@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import type { ConfigType } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -31,7 +37,9 @@ export class DocumentsService {
 
     let count = 0;
     for (const doc of expired) {
-      const expiry = new Date(doc.createdAt.getTime() + doc.ttlDays * 86_400_000);
+      const expiry = new Date(
+        doc.createdAt.getTime() + doc.ttlDays * 86_400_000,
+      );
       if (expiry < now) {
         await this.prisma.document.update({
           where: { id: doc.id },
@@ -49,7 +57,13 @@ export class DocumentsService {
   async findAll(
     companyId: string,
     query: { page?: number; limit?: number; status?: string },
-  ): Promise<{ items: DocumentResponseDto[]; total: number; page: number; limit: number; totalPages: number }> {
+  ): Promise<{
+    items: DocumentResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const where: Record<string, unknown> = { companyId, deletedAt: null };
@@ -68,7 +82,9 @@ export class DocumentsService {
     ]);
 
     return {
-      items: items.map((doc) => this.toResponseDto(doc as Record<string, unknown>)),
+      items: items.map((doc) =>
+        this.toResponseDto(doc as Record<string, unknown>),
+      ),
       total,
       page,
       limit,
@@ -76,17 +92,32 @@ export class DocumentsService {
     };
   }
 
-  async findOne(id: string): Promise<DocumentResponseDto> {
+  async findOne(id: string, userId: string): Promise<DocumentResponseDto> {
     const doc = await this.prisma.document.findUnique({ where: { id } });
     if (!doc || doc.deletedAt) {
       throw new NotFoundException('Document not found');
     }
-    return this.toResponseDto(doc as Record<string, unknown>);
+
+    const membership = await this.prisma.companyMembership.findFirst({
+      where: { userId, companyId: doc.companyId, deletedAt: null },
+    });
+    if (!membership) {
+      throw new NotFoundException('Document not found');
+    }
+
+    return this.toResponseDto(doc);
   }
 
-  async remove(id: string): Promise<DocumentResponseDto> {
+  async remove(id: string, userId: string): Promise<DocumentResponseDto> {
     const doc = await this.prisma.document.findUnique({ where: { id } });
     if (!doc || doc.deletedAt) {
+      throw new NotFoundException('Document not found');
+    }
+
+    const membership = await this.prisma.companyMembership.findFirst({
+      where: { userId, companyId: doc.companyId, deletedAt: null },
+    });
+    if (!membership) {
       throw new NotFoundException('Document not found');
     }
 
@@ -95,16 +126,26 @@ export class DocumentsService {
       data: { status: 'DELETED', deletedAt: new Date() },
     });
 
-    return this.toResponseDto(updated as Record<string, unknown>);
+    return this.toResponseDto(updated);
   }
 
   async upload(
     file: Express.Multer.File,
     companyId: string,
+    userId: string,
     ttlDays?: number,
   ): Promise<DocumentResponseDto> {
-    const company = await this.prisma.company.findUnique({ where: { id: companyId } });
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+    });
     if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    const membership = await this.prisma.companyMembership.findFirst({
+      where: { userId, companyId, deletedAt: null },
+    });
+    if (!membership) {
       throw new NotFoundException('Company not found');
     }
 
@@ -127,7 +168,10 @@ export class DocumentsService {
 
       this.logger.log(`Processing document ${document.id} with Document AI`);
 
-      const result = await this.documentAi.processDocument(file.buffer, file.mimetype);
+      const result = await this.documentAi.processDocument(
+        file.buffer,
+        file.mimetype,
+      );
 
       this.logger.log(`Document AI processing succeeded for ${document.id}`);
 
@@ -142,9 +186,12 @@ export class DocumentsService {
 
       return this.toResponseDto(updated);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Document processing failed';
+      const message =
+        error instanceof Error ? error.message : 'Document processing failed';
 
-      this.logger.error(`Document AI processing failed for ${document.id}: ${message}`);
+      this.logger.error(
+        `Document AI processing failed for ${document.id}: ${message}`,
+      );
 
       await this.prisma.document.update({
         where: { id: document.id },
@@ -166,7 +213,8 @@ export class DocumentsService {
       mimeType: doc.mimeType as string,
       fileSize: doc.fileSize as number,
       status: doc.status as string,
-      extractedFields: doc.extractedFields as DocumentResponseDto['extractedFields'],
+      extractedFields:
+        doc.extractedFields as DocumentResponseDto['extractedFields'],
       errorMessage: doc.errorMessage as string | undefined,
       createdAt: doc.createdAt as Date,
       updatedAt: doc.updatedAt as Date,

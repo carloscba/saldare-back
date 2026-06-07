@@ -9,21 +9,21 @@ import {
   UseInterceptors,
   UseGuards,
   Body,
+  Req,
   MaxFileSizeValidator,
   ParseFilePipe,
   FileTypeValidator,
   ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { mkdirSync } from 'fs';
+import type { Request } from 'express';
 import { FirebaseAuthGuard } from './guards/firebase-auth.guard';
+import { CompanyMembershipGuard } from './guards/company-membership.guard';
 import { DocumentsService } from './documents.service';
 import { DocumentListQueryDto } from './dto/document-list-query.dto';
 
 @Controller('api/documents')
-@UseGuards(FirebaseAuthGuard)
+@UseGuards(FirebaseAuthGuard, CompanyMembershipGuard)
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
@@ -33,30 +33,23 @@ export class DocumentsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.documentsService.findOne(id);
+  async findOne(@Param('id') id: string, @Req() req: Request) {
+    const user = req['user'] as { uid: string };
+    return this.documentsService.findOne(id, user.uid);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.documentsService.remove(id);
+  async remove(@Param('id') id: string, @Req() req: Request) {
+    const user = req['user'] as { uid: string };
+    return this.documentsService.remove(id, user.uid);
   }
 
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (_req, _file, cb) => {
-          const uploadDir = process.env.UPLOAD_DIR ?? '/tmp/uploads';
-          mkdirSync(uploadDir, { recursive: true });
-          cb(null, uploadDir);
-        },
-        filename: (_req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
-      limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE ?? '5242880', 10) },
+      limits: {
+        fileSize: parseInt(process.env.MAX_FILE_SIZE ?? '5242880', 10),
+      },
     }),
   )
   async upload(
@@ -70,8 +63,10 @@ export class DocumentsController {
     )
     file: Express.Multer.File,
     @Body('companyId') companyId: string,
+    @Req() req: Request,
     @Body('ttlDays') ttlDays?: number,
   ) {
-    return this.documentsService.upload(file, companyId, ttlDays);
+    const user = req['user'] as { uid: string };
+    return this.documentsService.upload(file, companyId, user.uid, ttlDays);
   }
 }

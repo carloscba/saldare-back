@@ -1,0 +1,3 @@
+# Gestion de usuarios y documentos
+
+Necesitamos poder gestionar users por companies. Los usuarios solo pueden subir documentos a empresas con las que estan relacionados. Necesitamos una tabla que nos permita relacionar usuarios con las empresas. Los usuarios solo pueden listar las empresas y los documentos con los que estan relacionadas. Necesitamos un sistema robusto para evitar que usuarios no autorizados accedan a documentos que no tienen asignados. Para las tablas y los nombres de campo usa las convenciones de la industria y ten en cuenta la capara de seguridad y de usuarios que ya tenemos.

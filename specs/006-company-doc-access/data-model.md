@@ -1,0 +1,151 @@
+# Data Model: Control de Acceso a Documentos por Compañía
+
+**Feature**: `006-company-doc-access`
+**Date**: 2026-06-06
+
+## Entity Relationship Diagram
+
+```
+┌─────────────────┐       ┌──────────────────────────┐       ┌─────────────────┐
+│     Company     │       │   CompanyMembership      │       │  (Firebase UID) │
+│─────────────────│       │──────────────────────────│       │  External Auth  │
+│ id (UUID, PK)   │──1:N──│ id (UUID, PK)            │──N:1──│ userId (String)  │
+│ name (String)   │       │ userId (String)          │       └─────────────────┘
+│ createdAt       │       │ companyId (UUID, FK)     │
+│ updatedAt       │       │ createdAt               │
+└─────────────────┘       │ updatedAt               │
+        │                 │ deletedAt?              │
+        │                 │ @@unique(userId,        │
+        │                 │          companyId)     │
+        │                 │ @@index([userId])       │
+        │                 │ @@index([companyId])    │
+        │                 └──────────────────────────┘
+        │
+        │ 1:N
+        ▼
+┌─────────────────┐
+│    Document     │
+│─────────────────│
+│ id (UUID, PK)   │
+│ companyId (FK)  │
+│ filename        │
+│ mimeType        │
+│ fileSize        │
+│ status (enum)   │
+│ extractedFields?│
+│ rawResponse?    │
+│ errorMessage?   │
+│ ttlDays         │
+│ createdAt       │
+│ updatedAt       │
+│ deletedAt?      │
+└─────────────────┘
+```
+
+## New Entity
+
+### CompanyMembership
+
+Represents an active or historical relationship between a Firebase-authenticated user and a Company. Membership grants the user permission to access the company's documents.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | UUID | PK, `@default(uuid())` | Unique membership record identifier |
+| `userId` | String | NOT NULL | Firebase Auth UID from verified JWT token |
+| `companyId` | UUID | NOT NULL, FK → `Company.id` | Company the user belongs to |
+| `createdAt` | DateTime | NOT NULL, `@default(now())` | When the membership was created |
+| `updatedAt` | DateTime | NOT NULL, `@updatedAt` | Last modification timestamp |
+| `deletedAt` | DateTime? | NULLABLE | Soft-delete timestamp. NULL = active member |
+
+**Indexes**:
+- `@@unique([userId, companyId])` — prevents duplicate memberships for the same user-company pair
+- `@@index([userId])` — optimizes "find all companies for a user" queries
+- `@@index([companyId])` — optimizes "find all users for a company" queries
+
+**Validation Rules**:
+- `userId` cannot be empty
+- `companyId` must reference an existing `Company` record
+- Duplicate active memberships (same `userId` + `companyId`) are rejected by unique constraint
+- Reactivation: setting `deletedAt = null` on an existing soft-deleted row
+
+**State Transitions**:
+
+```
+   [No Record]
+        │
+        │ INSERT (deletedAt = null)
+        ▼
+   [Active Member] ──────────────┐
+   (deletedAt = null)            │
+        │                        │
+        │ UPDATE deletedAt = now │ UPDATE deletedAt = null
+        ▼                        │
+   [Inactive Member] ◄───────────┘
+   (deletedAt = timestamp)
+```
+
+**Prisma Schema Addition**:
+
+```prisma
+model CompanyMembership {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.VarChar(128)
+  companyId String    @db.Uuid
+  company   Company   @relation(fields: [companyId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+}
+```
+
+## Modified Existing Entity
+
+### Company
+
+No schema changes required. The existing `Company` model already has `id`, `name`, `createdAt`, `updatedAt`, and the `documents` relation. This feature adds a new relation:
+
+```prisma
+memberships CompanyMembership[]
+```
+
+This is automatically created by Prisma when `CompanyMembership.company` relation is defined.
+
+### Document
+
+No schema changes. Access control is enforced at the service/guard layer using `CompanyMembership` data. Documents are implicitly scoped to their owning company via `companyId`.
+
+## Query Patterns
+
+### Pattern 1: "Is user U a member of company C?"
+```sql
+SELECT 1 FROM "CompanyMembership"
+WHERE "userId" = $1 AND "companyId" = $2 AND "deletedAt" IS NULL
+LIMIT 1;
+```
+Uses: `@@unique([userId, companyId])` index.
+
+### Pattern 2: "List all companies for user U"
+```sql
+SELECT c.* FROM "Company" c
+JOIN "CompanyMembership" cm ON cm."companyId" = c."id"
+WHERE cm."userId" = $1 AND cm."deletedAt" IS NULL;
+```
+Uses: `@@index([userId])`.
+
+### Pattern 3: "List all members of company C"
+```sql
+SELECT cm."userId" FROM "CompanyMembership" cm
+WHERE cm."companyId" = $1 AND cm."deletedAt" IS NULL;
+```
+Uses: `@@index([companyId])`.
+
+## Migration Notes
+
+1. Create the `CompanyMembership` table via `npx prisma migrate dev --name add_company_membership`
+2. Add `memberships CompanyMembership[]` relation to `Company` model (auto-generated by Prisma)
+3. Seed initial memberships via direct database INSERTs or `prisma seed`
+4. Unique constraint on `(userId, companyId)` requires that re-adding a previously removed member is done via `UPDATE "CompanyMembership" SET "deletedAt" = NULL, "updatedAt" = NOW()` rather than a new INSERT
