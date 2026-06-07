@@ -26,8 +26,8 @@
 
 **Purpose**: Create new type files needed by all subsequent phases — no existing code modified yet.
 
-- [ ] T001 [P] Create `DocumentTable` interface in `src/documents/dto/document-table.type.ts` — exports `{ headers: string[], rows: string[][] }`
-- [ ] T002 [P] Create `ExtractedData` interface in `src/documents/dto/extracted-data.type.ts` — exports `{ tables: DocumentTable[] }`
+- [X] T001 [P] Create `DocumentTable` interface in `src/documents/dto/document-table.type.ts` — exports `{ headers: string[], rows: string[][] }`
+- [X] T002 [P] Create `ExtractedData` interface in `src/documents/dto/extracted-data.type.ts` — exports `{ tables: DocumentTable[] }`
 
 ---
 
@@ -37,9 +37,9 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T003 Update `DocumentAIClient` interface return type in `src/documents/dto/document-ai-client.type.ts` — change `processDocument` return from `{ extractedFields: [...] }` to `{ tables: DocumentTable[]; rawResponse: unknown }`
-- [ ] T004 Update `DocumentResponseDto` in `src/documents/dto/document-response.dto.ts` — change `extractedFields` type from `ExtractedField[]` to `ExtractedData` (import from `extracted-data.type`)
-- [ ] T005 Delete `src/documents/interfaces/extracted-field.interface.ts` and remove its import from `src/documents/dto/document-response.dto.ts`
+- [X] T003 Update `DocumentAIClient` interface return type in `src/documents/dto/document-ai-client.type.ts` — change `processDocument` return from `{ extractedFields: [...] }` to `{ tables: DocumentTable[]; rawResponse: unknown }`
+- [X] T004 Update `DocumentResponseDto` in `src/documents/dto/document-response.dto.ts` — change `extractedFields` type from `ExtractedField[]` to `ExtractedData` (import from `extracted-data.type`)
+- [X] T005 Delete `src/documents/interfaces/extracted-field.interface.ts` and remove its import from `src/documents/dto/document-response.dto.ts`
 
 **Checkpoint**: Foundation ready — all shared types and DTOs updated. User story implementation can now begin.
 
@@ -53,7 +53,7 @@
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] Refactor factory in `src/documents/providers/document-ai-client.provider.ts`:
+- [X] T006 [US1] Refactor factory in `src/documents/providers/document-ai-client.provider.ts`:
   - Remove form-fields loop (lines 56-65) — no more key-value extraction
   - Rewrite tables loop (lines 67-84) to build `DocumentTable[]` instead of flat `extractedFields`:
     - For each table: extract headers from `headerRows.cells[]` as `string[]`
@@ -63,8 +63,8 @@
     - Keep tables separate per page (do not merge across pages)
   - Return `{ tables: DocumentTable[], rawResponse: result }`
   - Keep `process.env` for config (will be replaced in US3)
-- [ ] T007 [US1] Update `upload()` method in `src/documents/documents.service.ts` (line 178-184): persist `result.tables` in `extractedFields` column as `{ tables: result.tables }` instead of `result.extractedFields` flat array
-- [ ] T008 [US1] Update unit test mock data in `tests/unit/documents.service.spec.ts` — change `processDocument` mock return to `{ tables: [...], rawResponse: {} }` format matching new DocumentTable shape
+- [X] T007 [US1] Update `upload()` method in `src/documents/documents.service.ts` (line 178-184): persist `result.tables` in `extractedFields` column as `{ tables: result.tables }` instead of `result.extractedFields` flat array
+- [X] T008 [US1] Update unit test mock data in `tests/unit/documents.service.spec.ts` — change `processDocument` mock return to `{ tables: [...], rawResponse: {} }` format matching new DocumentTable shape
 
 **Checkpoint**: User Story 1 should be fully functional — upload returns structured table data. Documents with no tables return `{ tables: [] }`.
 
@@ -78,12 +78,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T009 [US2] Update `toResponseDto()` method in `src/documents/documents.service.ts` (line 208-223) with old-format detection:
+- [X] T009 [US2] Update `toResponseDto()` method in `src/documents/documents.service.ts` (line 208-223) with old-format detection:
   - Check if `doc.extractedFields` is an array with `Array.isArray()`
   - If array (old format) → return `{ tables: [] }`
   - If object with `tables` (new format) → return as-is
   - If null/undefined → return `undefined`
-- [ ] T010 [US2] Update e2e test assertions in `tests/e2e/documents.controller.spec.ts` — verify GET responses use new `{ tables: [...] }` shape (if test file exists and has extraction assertions)
+- [X] T010 [US2] Update e2e test assertions in `tests/e2e/documents.controller.spec.ts` — verify GET responses use new `{ tables: [...] }` shape (if test file exists and has extraction assertions)
 
 **Checkpoint**: User Stories 1 AND 2 both work independently — upload and retrieval both use structured table format. Old documents are retrievable.
 
@@ -97,7 +97,7 @@
 
 ### Implementation for User Story 3
 
-- [ ] T011 [US3] Refactor factory in `src/documents/providers/document-ai-client.provider.ts`:
+- [X] T011 [US3] Refactor factory in `src/documents/providers/document-ai-client.provider.ts`:
   - Import `ConfigType` from `@nestjs/config` and `documentAiConfig` from `../config/document-ai.config`
   - Add `inject: [documentAiConfig.KEY]` to the `FactoryProvider` definition
   - Change `useFactory` from `() => { ... }` to `(config: ConfigType<typeof documentAiConfig>) => { ... }`
@@ -105,7 +105,7 @@
   - Replace `process.env.DOCUMENT_AI_PROCESSOR_ID` → `config.processorId`
   - Replace `process.env.DOCUMENT_AI_PROCESSOR_LOCATION` → `config.processorLocation`
   - The `apiEndpoint` uses `config.processorLocation` instead of the old `process.env` default
-- [ ] T012 [US3] Update unit test in `tests/unit/documents.service.spec.ts` — verify factory config injection works with the mocked `documentAiConfig` token (already mocked in test setup, verify it propagates correctly through the provider)
+- [X] T012 [US3] Update unit test in `tests/unit/documents.service.spec.ts` — verify factory config injection works with the mocked `documentAiConfig` token (already mocked in test setup, verify it propagates correctly through the provider)
 
 **Checkpoint**: All user stories now independently functional. Factory is testable with mocked config.
 
@@ -115,9 +115,9 @@
 
 **Purpose**: Validation, cleanup, and verification across all stories.
 
-- [ ] T013 [P] Run lint and type-check on changed files: `npm run lint` and `npm run typecheck`
-- [ ] T014 Run quickstart.md validation steps — verify upload and retrieval flow with new table format
-- [ ] T015 [P] Review and remove any remaining references to `ExtractedField` across the codebase (grep for `ExtractedField`, `extracted-field`)
+- [X] T013 [P] Run lint and type-check on changed files: `npm run lint` and `npm run build`
+- [X] T014 Run quickstart.md validation steps — verify upload and retrieval flow with new table format
+- [X] T015 [P] Review and remove any remaining references to `ExtractedField` across the codebase (grep for `ExtractedField`, `extracted-field`)
 
 ---
 

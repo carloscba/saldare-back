@@ -1,39 +1,63 @@
 import { FactoryProvider } from '@nestjs/common';
+import { ConfigType } from '@nestjs/config';
 import { DocumentAIClient } from '../dto/document-ai-client.type';
+import { DocumentTable } from '../dto/document-table.type';
+import documentAiConfig from '../config/document-ai.config';
+
+interface DocAITextAnchor {
+  content?: string;
+  textSegments?: Array<{ startIndex?: string | number; endIndex?: string | number }>;
+}
 
 interface DocAIPage {
-  formFields?: Array<{
-    fieldName?: { textAnchor?: { content?: string }; confidence?: number };
-    fieldValue?: { textAnchor?: { content?: string }; confidence?: number };
-  }>;
   tables?: Array<{
     headerRows?: Array<{
-      cells?: Array<{ layout?: { textAnchor?: { content?: string } } }>;
+      cells?: Array<{ layout?: { textAnchor?: DocAITextAnchor } }>;
     }>;
     bodyRows?: Array<{
-      cells?: Array<{ layout?: { textAnchor?: { content?: string } } }>;
+      cells?: Array<{ layout?: { textAnchor?: DocAITextAnchor } }>;
     }>;
   }>;
 }
 
 export const DocumentAiClientFactory: FactoryProvider<DocumentAIClient> = {
   provide: 'DOCUMENT_AI_CLIENT',
-  useFactory: () => {
+  inject: [documentAiConfig.KEY],
+  useFactory: (config: ConfigType<typeof documentAiConfig>) => {
     const {
       DocumentProcessorServiceClient,
     } = require('@google-cloud/documentai');
 
     const client = new DocumentProcessorServiceClient({
-      apiEndpoint: `${process.env.DOCUMENT_AI_PROCESSOR_LOCATION ?? 'us'}-documentai.googleapis.com`,
+      apiEndpoint: `${config.processorLocation}-documentai.googleapis.com`,
     });
+
+    function getCellText(
+      cell: { layout?: { textAnchor?: DocAITextAnchor } },
+      fullText: string,
+    ): string {
+      const anchor = cell.layout?.textAnchor;
+      if (!anchor) return '';
+
+      if (anchor.content && anchor.content.trim() !== '') {
+        return anchor.content;
+      }
+
+      if (anchor.textSegments && anchor.textSegments.length > 0) {
+        const seg = anchor.textSegments[0];
+        const start = Number(seg.startIndex ?? 0);
+        const end = Number(seg.endIndex ?? start);
+        if (end > start && fullText) {
+          return fullText.slice(start, end);
+        }
+      }
+
+      return anchor.content ?? '';
+    }
 
     return {
       async processDocument(fileBuffer: Buffer, mimeType: string) {
-        const projectId = process.env.DOCUMENT_AI_PROJECT_ID;
-        const processorId = process.env.DOCUMENT_AI_PROCESSOR_ID;
-        const location = process.env.DOCUMENT_AI_PROCESSOR_LOCATION ?? 'us';
-
-        const name = `projects/${projectId}/locations/${location}/processors/${processorId}`;
+        const name = `projects/${config.projectId}/locations/${config.processorLocation}/processors/${config.processorId}`;
 
         const [result] = await client.processDocument({
           name,
@@ -45,47 +69,60 @@ export const DocumentAiClientFactory: FactoryProvider<DocumentAIClient> = {
 
         const document = result.document;
         const pages = (document?.pages ?? []) as DocAIPage[];
+        const fullText = (document as { text?: string })?.text ?? '';
 
-        const extractedFields: Array<{
-          label: string;
-          value: string;
-          confidence: number;
-        }> = [];
+        const tables: DocumentTable[] = [];
 
         for (const page of pages) {
-          for (const field of page.formFields ?? []) {
-            extractedFields.push({
-              label: field.fieldName?.textAnchor?.content ?? '',
-              value: field.fieldValue?.textAnchor?.content ?? '',
-              confidence:
-                field.fieldValue?.confidence ??
-                field.fieldName?.confidence ??
-                0,
-            });
-          }
-
           for (const table of page.tables ?? []) {
-            const headers = (table.headerRows ?? []).flatMap((row) =>
-              (row.cells ?? []).map(
-                (cell) => cell.layout?.textAnchor?.content ?? '',
-              ),
+            const headerRows = table.headerRows ?? [];
+            const bodyRows = table.bodyRows ?? [];
+
+            console.log(
+              `[DocAI] Table found — headers: ${headerRows.length} rows, ` +
+                `body: ${bodyRows.length} rows`,
             );
-            for (const row of table.bodyRows ?? []) {
-              const values = (row.cells ?? []).map(
-                (cell) => cell.layout?.textAnchor?.content ?? '',
+
+            const headers = headerRows.flatMap((row) =>
+              (row.cells ?? []).map((cell) => getCellText(cell, fullText)),
+            );
+
+            if (bodyRows.length > 0 && bodyRows[0]?.cells?.length) {
+              const sampleTexts = bodyRows[0].cells.map((c) =>
+                getCellText(c, fullText),
               );
-              const rowLabel = values.join(' | ');
-              extractedFields.push({
-                label: headers.join(' | ') || 'table_row',
-                value: rowLabel,
-                confidence: 1,
-              });
+              console.log(
+                `[DocAI] First body row (${bodyRows[0].cells.length} cells): [${sampleTexts.join(' | ')}]`,
+              );
+            } else {
+              console.log(
+                `[DocAI] Body rows present=${bodyRows.length > 0}, ` +
+                  `first row cells=${bodyRows[0]?.cells?.length ?? 'undefined'}`,
+              );
             }
+
+            const rows: string[][] = [];
+
+            for (const bodyRow of bodyRows) {
+              const values = (bodyRow.cells ?? []).map((cell) =>
+                getCellText(cell, fullText),
+              );
+
+              while (values.length < headers.length) {
+                values.push('');
+              }
+
+              rows.push(values.slice(0, headers.length));
+            }
+
+            tables.push({ headers, rows });
           }
         }
 
+        console.log(`[DocAI] Total tables extracted: ${tables.length}`);
+
         return {
-          extractedFields,
+          tables,
           rawResponse: result,
         };
       },

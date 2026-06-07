@@ -1,13 +1,11 @@
+import { DocumentTable } from './document-table.type';
+
 export interface DocumentAIClient {
   processDocument(
     fileBuffer: Buffer,
     mimeType: string,
   ): Promise<{
-    extractedFields: Array<{
-      label: string;
-      value: string;
-      confidence: number;
-    }>;
+    tables: DocumentTable[];
     rawResponse: unknown;
   }>;
 }
