@@ -31,21 +31,15 @@ describe('AppController (e2e)', () => {
   });
 
   it('/health (POST) returns 405 Method Not Allowed', () => {
-    return request(app.getHttpServer())
-      .post('/health')
-      .expect(405);
+    return request(app.getHttpServer()).post('/health').expect(405);
   });
 
   it('/health (PUT) returns 405 Method Not Allowed', () => {
-    return request(app.getHttpServer())
-      .put('/health')
-      .expect(405);
+    return request(app.getHttpServer()).put('/health').expect(405);
   });
 
   it('/health (DELETE) returns 405 Method Not Allowed', () => {
-    return request(app.getHttpServer())
-      .delete('/health')
-      .expect(405);
+    return request(app.getHttpServer()).delete('/health').expect(405);
   });
 
   afterEach(async () => {

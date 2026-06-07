@@ -25,12 +25,18 @@ export async function validateFile(
   }
 
   if (!mimetype || !ALLOWED_MIME_TYPES.includes(mimetype)) {
-    return { valid: false, error: 'Unsupported file type. Accepted: PDF, PNG, JPEG, TIFF' };
+    return {
+      valid: false,
+      error: 'Unsupported file type. Accepted: PDF, PNG, JPEG, TIFF',
+    };
   }
 
   const detected = await fileTypeFromBuffer(buffer);
   if (!detected || !ALLOWED_MIME_TYPES.includes(detected.mime)) {
-    return { valid: false, error: 'File content does not match expected format' };
+    return {
+      valid: false,
+      error: 'File content does not match expected format',
+    };
   }
 
   return { valid: true, mimeType: detected.mime };

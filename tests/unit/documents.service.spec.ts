@@ -21,6 +21,9 @@ describe('DocumentsService', () => {
     company: {
       findUnique: jest.fn(),
     },
+    companyMembership: {
+      findFirst: jest.fn(),
+    },
   };
 
   const mockDocumentAi = {
@@ -62,11 +65,13 @@ describe('DocumentsService', () => {
     } as Express.Multer.File;
 
     const companyId = '0195f1a1-0000-0000-0000-000000000001';
+    const userId = 'test-user';
     const ttlDays = 30;
 
     it('should create a document and return the result', async () => {
       const createdAt = new Date();
       mockPrisma.company.findUnique.mockResolvedValue({ id: companyId, name: 'Test Company' });
+      mockPrisma.companyMembership.findFirst.mockResolvedValue({ id: 'mem-1', userId, companyId });
       mockPrisma.document.create.mockResolvedValue({
         id: 'doc-1',
         companyId,
@@ -102,7 +107,7 @@ describe('DocumentsService', () => {
         rawResponse: { data: 'ok' },
       });
 
-      const result = await service.upload(validFile, companyId, ttlDays);
+      const result = await service.upload(validFile, companyId, userId, ttlDays);
 
       expect(result).toBeDefined();
       expect(result.status).toBe('COMPLETED');
@@ -112,7 +117,14 @@ describe('DocumentsService', () => {
     it('should throw if company does not exist', async () => {
       mockPrisma.company.findUnique.mockResolvedValue(null);
 
-      await expect(service.upload(validFile, 'non-existent-id', ttlDays)).rejects.toThrow();
+      await expect(service.upload(validFile, 'non-existent-id', userId, ttlDays)).rejects.toThrow();
+    });
+
+    it('should throw if user is not a member of the company', async () => {
+      mockPrisma.company.findUnique.mockResolvedValue({ id: companyId, name: 'Test Company' });
+      mockPrisma.companyMembership.findFirst.mockResolvedValue(null);
+
+      await expect(service.upload(validFile, companyId, userId, ttlDays)).rejects.toThrow('Company not found');
     });
   });
 
@@ -155,14 +167,16 @@ describe('DocumentsService', () => {
   describe('remove()', () => {
     const docId = 'doc-1';
     const companyId = '0195f1a1-0000-0000-0000-000000000001';
+    const userId = 'test-user';
 
     it('should soft-delete a document and return it', async () => {
       const doc = { id: docId, companyId, filename: 'a.pdf', mimeType: 'application/pdf', fileSize: 100, status: 'COMPLETED', extractedFields: null, errorMessage: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
       const deletedDoc = { ...doc, status: 'DELETED', deletedAt: new Date() };
       mockPrisma.document.findUnique.mockResolvedValue(doc);
+      mockPrisma.companyMembership.findFirst.mockResolvedValue({ id: 'mem-1', userId, companyId });
       mockPrisma.document.update.mockResolvedValue(deletedDoc);
 
-      const result = await service.remove(docId);
+      const result = await service.remove(docId, userId);
 
       expect(result.status).toBe('DELETED');
       expect(result.deletedAt).toBeDefined();
@@ -177,7 +191,7 @@ describe('DocumentsService', () => {
     it('should throw NotFoundException if document does not exist', async () => {
       mockPrisma.document.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove(docId)).rejects.toThrow('Document not found');
+      await expect(service.remove(docId, userId)).rejects.toThrow('Document not found');
     });
 
     it('should throw NotFoundException if already deleted', async () => {
@@ -185,19 +199,29 @@ describe('DocumentsService', () => {
         id: docId, companyId, filename: 'a.pdf', mimeType: 'application/pdf', fileSize: 100, status: 'DELETED', extractedFields: null, errorMessage: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: new Date(),
       });
 
-      await expect(service.remove(docId)).rejects.toThrow('Document not found');
+      await expect(service.remove(docId, userId)).rejects.toThrow('Document not found');
+    });
+
+    it('should throw NotFoundException if user is not a member of the document company', async () => {
+      const doc = { id: docId, companyId, filename: 'a.pdf', mimeType: 'application/pdf', fileSize: 100, status: 'COMPLETED', extractedFields: null, errorMessage: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+      mockPrisma.document.findUnique.mockResolvedValue(doc);
+      mockPrisma.companyMembership.findFirst.mockResolvedValue(null);
+
+      await expect(service.remove(docId, userId)).rejects.toThrow('Document not found');
     });
   });
 
   describe('findOne()', () => {
     const docId = 'doc-1';
     const companyId = '0195f1a1-0000-0000-0000-000000000001';
+    const userId = 'test-user';
 
     it('should return a document by id', async () => {
       const doc = { id: docId, companyId, filename: 'a.pdf', mimeType: 'application/pdf', fileSize: 100, status: 'COMPLETED', extractedFields: null, errorMessage: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
       mockPrisma.document.findUnique.mockResolvedValue(doc);
+      mockPrisma.companyMembership.findFirst.mockResolvedValue({ id: 'mem-1', userId, companyId });
 
-      const result = await service.findOne(docId);
+      const result = await service.findOne(docId, userId);
 
       expect(result.id).toBe(docId);
       expect(mockPrisma.document.findUnique).toHaveBeenCalledWith({ where: { id: docId } });
@@ -206,14 +230,22 @@ describe('DocumentsService', () => {
     it('should throw NotFoundException if document does not exist', async () => {
       mockPrisma.document.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne(docId)).rejects.toThrow('Document not found');
+      await expect(service.findOne(docId, userId)).rejects.toThrow('Document not found');
     });
 
     it('should throw NotFoundException if document is soft-deleted', async () => {
       const deletedDoc = { id: docId, companyId, filename: 'a.pdf', mimeType: 'application/pdf', fileSize: 100, status: 'DELETED', extractedFields: null, errorMessage: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: new Date() };
       mockPrisma.document.findUnique.mockResolvedValue(deletedDoc);
 
-      await expect(service.findOne(docId)).rejects.toThrow('Document not found');
+      await expect(service.findOne(docId, userId)).rejects.toThrow('Document not found');
+    });
+
+    it('should throw NotFoundException if user is not a member of the document company', async () => {
+      const doc = { id: docId, companyId, filename: 'a.pdf', mimeType: 'application/pdf', fileSize: 100, status: 'COMPLETED', extractedFields: null, errorMessage: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+      mockPrisma.document.findUnique.mockResolvedValue(doc);
+      mockPrisma.companyMembership.findFirst.mockResolvedValue(null);
+
+      await expect(service.findOne(docId, userId)).rejects.toThrow('Document not found');
     });
   });
 });

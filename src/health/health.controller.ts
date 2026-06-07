@@ -1,4 +1,9 @@
-import { All, Controller, MethodNotAllowedException, Req } from '@nestjs/common';
+import {
+  All,
+  Controller,
+  MethodNotAllowedException,
+  Req,
+} from '@nestjs/common';
 import type { Request } from 'express';
 
 @Controller('health')

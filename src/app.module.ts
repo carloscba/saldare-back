@@ -6,9 +6,17 @@ import { AppService } from './app.service';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { DocumentsModule } from './documents/documents.module';
+import { CompaniesModule } from './companies/companies.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), ScheduleModule.forRoot(), HealthModule, PrismaModule, DocumentsModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
+    HealthModule,
+    PrismaModule,
+    DocumentsModule,
+    CompaniesModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

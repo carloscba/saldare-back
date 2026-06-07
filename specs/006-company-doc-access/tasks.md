@@ -20,7 +20,7 @@
 
 **Purpose**: Create directory structure and placeholder files needed before implementation begins
 
-- [ ] T001 [P] Create directory structure: `src/companies/`, `src/companies/dto/`, `src/documents/guards/` (verify all parent dirs exist)
+- [X] T001 [P] Create directory structure: `src/companies/`, `src/companies/dto/`, `src/documents/guards/` (verify all parent dirs exist)
 
 ---
 
@@ -30,8 +30,8 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 Add `CompanyMembership` model to `prisma/schema.prisma` (fields: id, userId, companyId, createdAt, updatedAt, deletedAt; constraints: `@@unique([userId, companyId])`, `@@index([userId])`, `@@index([companyId])`; relation to Company)
-- [ ] T003 Run database migration: `npx prisma migrate dev --name add_company_membership` (generates migration file + regenerates PrismaClient with new types)
+- [X] T002 Add `CompanyMembership` model to `prisma/schema.prisma` (fields: id, userId, companyId, createdAt, updatedAt, deletedAt; constraints: `@@unique([userId, companyId])`, `@@index([userId])`, `@@index([companyId])`; relation to Company)
+- [X] T003 Run database migration: `npx prisma migrate dev --name add_company_membership` (generates migration file + regenerates PrismaClient with new types)
 
 **Checkpoint**: Foundation ready — user story implementation can now begin in parallel
 
@@ -45,18 +45,18 @@
 
 ### Implementation for User Story 1
 
-- [ ] T004 [US1] Implement `CompanyMembershipGuard` in `src/documents/guards/company-membership.guard.ts` — reads `request.user.uid` (set by FirebaseAuthGuard), extracts `companyId` from request query/body, queries `CompanyMembership` for active membership, throws `ForbiddenException` with structured log on denial
-- [ ] T005 [US1] Wire `CompanyMembershipGuard` to `DocumentsController` in `src/documents/documents.controller.ts` — update `@UseGuards` on list and upload endpoints to include guard (findAll: extract from query, upload: extract from body); findOne/remove stay unchanged (handled in service layer)
-- [ ] T006 [US1] Register `CompanyMembershipGuard` as a provider in `src/documents/documents.module.ts`
-- [ ] T007 [US1] Add membership check to `DocumentsService.findOne()` in `src/documents/documents.service.ts` — after fetching document, resolve `companyId`, verify active membership via Prisma, throw `NotFoundException` if not a member (404 to hide document existence, consistent with FR-005)
-- [ ] T008 [US1] Add membership check to `DocumentsService.remove()` in `src/documents/documents.service.ts` — same pattern as findOne: resolve companyId from document, verify membership, throw `NotFoundException` if not a member
-- [ ] T009 [US1] Add structured audit logging to `CompanyMembershipGuard` in `src/documents/guards/company-membership.guard.ts` — log JSON to stdout on 403 with fields: `timestamp`, `userId`, `requestedCompanyId`, `endpoint`, `reason`; use NestJS `Logger` at `warn` level (per RD-005)
+- [X] T004 [US1] Implement `CompanyMembershipGuard` in `src/documents/guards/company-membership.guard.ts` — reads `request.user.uid` (set by FirebaseAuthGuard), extracts `companyId` from request query/body, queries `CompanyMembership` for active membership, throws `ForbiddenException` with structured log on denial
+- [X] T005 [US1] Wire `CompanyMembershipGuard` to `DocumentsController` in `src/documents/documents.controller.ts` — update `@UseGuards` on list and upload endpoints to include guard (findAll: extract from query, upload: extract from body); findOne/remove stay unchanged (handled in service layer)
+- [X] T006 [US1] Register `CompanyMembershipGuard` as a provider in `src/documents/documents.module.ts`
+- [X] T007 [US1] Add membership check to `DocumentsService.findOne()` in `src/documents/documents.service.ts` — after fetching document, resolve `companyId`, verify active membership via Prisma, throw `NotFoundException` if not a member (404 to hide document existence, consistent with FR-005)
+- [X] T008 [US1] Add membership check to `DocumentsService.remove()` in `src/documents/documents.service.ts` — same pattern as findOne: resolve companyId from document, verify membership, throw `NotFoundException` if not a member
+- [X] T009 [US1] Add structured audit logging to `CompanyMembershipGuard` in `src/documents/guards/company-membership.guard.ts` — log JSON to stdout on 403 with fields: `timestamp`, `userId`, `requestedCompanyId`, `endpoint`, `reason`; use NestJS `Logger` at `warn` level (per RD-005)
 
 ### Tests for User Story 1
 
-- [ ] T010 [P] [US1] Create unit tests for `CompanyMembershipGuard` in `tests/unit/company-membership.guard.spec.ts` — test: allows member access, rejects non-member with 403, rejects missing companyId, verifies structured log output
-- [ ] T011 [P] [US1] Update unit tests for `DocumentsService` in `tests/unit/documents.service.spec.ts` — add membership check scenarios: findOne/remove for non-member throws NotFoundException, findOne/remove for member succeeds; mock `companyMembership.findFirst`
-- [ ] T012 [P] [US1] Update E2E tests for `DocumentsController` in `tests/e2e/documents.controller.spec.ts` — add 403 scenarios: list with non-member companyId, upload to non-member companyId; add 404 scenario: get-by-id when user is not member of document's company; override `CompanyMembershipGuard` with a pass-through for existing positive tests
+- [X] T010 [P] [US1] Create unit tests for `CompanyMembershipGuard` in `tests/unit/company-membership.guard.spec.ts` — test: allows member access, rejects non-member with 403, rejects missing companyId, verifies structured log output
+- [X] T011 [P] [US1] Update unit tests for `DocumentsService` in `tests/unit/documents.service.spec.ts` — add membership check scenarios: findOne/remove for non-member throws NotFoundException, findOne/remove for member succeeds; mock `companyMembership.findFirst`
+- [X] T012 [P] [US1] Update E2E tests for `DocumentsController` in `tests/e2e/documents.controller.spec.ts` — add 403 scenarios: list with non-member companyId, upload to non-member companyId; add 404 scenario: get-by-id when user is not member of document's company; override `CompanyMembershipGuard` with a pass-through for existing positive tests
 
 **Checkpoint**: User Story 1 is fully functional — unauthorized users are blocked from all document endpoints with correct error codes and audit logs
 
@@ -70,16 +70,16 @@
 
 ### Implementation for User Story 2
 
-- [ ] T013 [P] [US2] Create `CompanyResponseDto` in `src/companies/dto/company-response.dto.ts` — fields: `id` (string), `name` (string), `createdAt` (Date)
-- [ ] T014 [US2] Implement `CompaniesService` in `src/companies/companies.service.ts` — method `findByUser(userId: string)`: joins `CompanyMembership` (active only) with `Company`, returns companies ordered by name ASC; depends on T013
-- [ ] T015 [US2] Implement `CompaniesController` in `src/companies/companies.controller.ts` — single `GET /api/companies` endpoint; protected by `FirebaseAuthGuard`; reads `request.user.uid`, calls `CompaniesService.findByUser()`
-- [ ] T016 [US2] Create `CompaniesModule` in `src/companies/companies.module.ts` — imports `PrismaModule` (already global), declares `CompaniesController` and `CompaniesService`, exports nothing
-- [ ] T017 [US2] Import `CompaniesModule` into `AppModule` in `src/app.module.ts`
+- [X] T013 [P] [US2] Create `CompanyResponseDto` in `src/companies/dto/company-response.dto.ts` — fields: `id` (string), `name` (string), `createdAt` (Date)
+- [X] T014 [US2] Implement `CompaniesService` in `src/companies/companies.service.ts` — method `findByUser(userId: string)`: joins `CompanyMembership` (active only) with `Company`, returns companies ordered by name ASC; depends on T013
+- [X] T015 [US2] Implement `CompaniesController` in `src/companies/companies.controller.ts` — single `GET /api/companies` endpoint; protected by `FirebaseAuthGuard`; reads `request.user.uid`, calls `CompaniesService.findByUser()`
+- [X] T016 [US2] Create `CompaniesModule` in `src/companies/companies.module.ts` — imports `PrismaModule` (already global), declares `CompaniesController` and `CompaniesService`, exports nothing
+- [X] T017 [US2] Import `CompaniesModule` into `AppModule` in `src/app.module.ts`
 
 ### Tests for User Story 2
 
-- [ ] T018 [P] [US2] Create unit tests for `CompaniesService` in `tests/unit/companies.service.spec.ts` — test: returns only active memberships, excludes soft-deleted memberships, returns empty array for user with no memberships, verifies Prisma query shape (join + deletedAt filter)
-- [ ] T019 [P] [US2] Create E2E tests for `CompaniesController` in `tests/e2e/companies.controller.spec.ts` — test: 401 without auth, 200 with companies (seeded memberships), 200 with empty list, verify response shape matches `CompanyResponseDto`
+- [X] T018 [P] [US2] Create unit tests for `CompaniesService` in `tests/unit/companies.service.spec.ts` — test: returns only active memberships, excludes soft-deleted memberships, returns empty array for user with no memberships, verifies Prisma query shape (join + deletedAt filter)
+- [X] T019 [P] [US2] Create E2E tests for `CompaniesController` in `tests/e2e/companies.controller.spec.ts` — test: 401 without auth, 200 with companies (seeded memberships), 200 with empty list, verify response shape matches `CompanyResponseDto`
 
 **Checkpoint**: Users can list their authorized companies. US1 + US2 together form the complete MVP.
 
@@ -93,8 +93,8 @@
 
 ### Implementation for User Story 3
 
-- [ ] T020 [US3] Create seed script for test memberships in `prisma/seed.ts` (or extend existing seed) — insert test companies and memberships using `prisma.companyMembership.create()`; handle unique constraint gracefully for re-runs (use `upsert`)
-- [ ] T021 [US3] Verify end-to-end membership lifecycle: test reactivation scenario — soft-delete a membership (`deletedAt = NOW()`), verify user loses access (403), then reactivate (`deletedAt = NULL`), verify user regains access (200) — documented in `specs/006-company-doc-access/quickstart.md` step 4.6-4.7
+- [X] T020 [US3] Create seed script for test memberships in `prisma/seed.ts` (or extend existing seed) — insert test companies and memberships using `prisma.companyMembership.create()`; handle unique constraint gracefully for re-runs (use `upsert`)
+- [X] T021 [US3] Verify end-to-end membership lifecycle: test reactivation scenario — soft-delete a membership (`deletedAt = NOW()`), verify user loses access (403), then reactivate (`deletedAt = NULL`), verify user regains access (200) — documented in `specs/006-company-doc-access/quickstart.md` step 4.6-4.7
 
 **Checkpoint**: Membership data is seedable and the authorization layer responds to state changes (add, remove, reactivate) in real time.
 
@@ -108,8 +108,8 @@
 
 ### Implementation for User Story 4
 
-- [ ] T022 [US4] Verify cross-user document visibility — confirm (via US1 tests) that the existing `findAll` query already returns all documents for a company (not filtered by uploader), and that the guard allows any active member regardless of who uploaded the document
-- [ ] T023 [US4] Update E2E tests in `tests/e2e/documents.controller.spec.ts` — add scenario: user A uploads to company C1, user B (also member of C1) lists documents and sees user A's upload; user C (member of C2 only) lists C1 and gets 403
+- [X] T022 [US4] Verify cross-user document visibility — confirm (via US1 tests) that the existing `findAll` query already returns all documents for a company (not filtered by uploader), and that the guard allows any active member regardless of who uploaded the document
+- [X] T023 [US4] Update E2E tests in `tests/e2e/documents.controller.spec.ts` — add scenario: user A uploads to company C1, user B (also member of C1) lists documents and sees user A's upload; user C (member of C2 only) lists C1 and gets 403
 
 **Checkpoint**: Document visibility model confirmed — company-scoped documents visible to all members, invisible to non-members.
 
@@ -119,10 +119,10 @@
 
 **Purpose**: Final integration verification, cleanup, and validation against quickstart guide
 
-- [ ] T024 Run quickstart.md validation — execute all steps from `specs/006-company-doc-access/quickstart.md` and verify expected results
-- [ ] T025 [P] Run npm typecheck/lint — `npm run lint` (if available) to verify no TypeScript errors or lint violations introduced
-- [ ] T026 [P] Run full test suite — `npm test` and `npm run test:e2e` to confirm all existing and new tests pass
-- [ ] T027 Review all FR-001 to FR-010 coverage against implemented code (guard, service, controller, schema) — document any gaps
+- [X] T024 Run quickstart.md validation — execute all steps from `specs/006-company-doc-access/quickstart.md` and verify expected results
+- [X] T025 [P] Run npm typecheck/lint — `npm run lint` (if available) to verify no TypeScript errors or lint violations introduced
+- [X] T026 [P] Run full test suite — `npm test` and `npm run test:e2e` to confirm all existing and new tests pass
+- [X] T027 Review all FR-001 to FR-010 coverage against implemented code (guard, service, controller, schema) — document any gaps
 
 ---
 
