@@ -1,4 +1,4 @@
-import { ExtractedField } from '../interfaces/extracted-field.interface';
+import { ExtractedData } from './extracted-data.type';
 
 export class DocumentResponseDto {
   id: string;
@@ -7,7 +7,7 @@ export class DocumentResponseDto {
   mimeType: string;
   fileSize: number;
   status: string;
-  extractedFields?: ExtractedField[];
+  extractedFields?: ExtractedData;
   errorMessage?: string;
   createdAt: Date;
   updatedAt: Date;

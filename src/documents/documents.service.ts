@@ -179,7 +179,9 @@ export class DocumentsService {
         where: { id: document.id },
         data: {
           status: 'COMPLETED',
-          extractedFields: result.extractedFields,
+          extractedFields: JSON.parse(
+            JSON.stringify({ tables: result.tables }),
+          ),
           rawResponse: JSON.parse(JSON.stringify(result.rawResponse)),
         },
       });
@@ -206,6 +208,17 @@ export class DocumentsService {
   }
 
   private toResponseDto(doc: Record<string, unknown>): DocumentResponseDto {
+    let extractedFields: DocumentResponseDto['extractedFields'];
+
+    if (doc.extractedFields != null) {
+      if (Array.isArray(doc.extractedFields)) {
+        extractedFields = { tables: [] };
+      } else {
+        extractedFields =
+          doc.extractedFields as DocumentResponseDto['extractedFields'];
+      }
+    }
+
     return {
       id: doc.id as string,
       companyId: doc.companyId as string,
@@ -213,8 +226,7 @@ export class DocumentsService {
       mimeType: doc.mimeType as string,
       fileSize: doc.fileSize as number,
       status: doc.status as string,
-      extractedFields:
-        doc.extractedFields as DocumentResponseDto['extractedFields'],
+      extractedFields,
       errorMessage: doc.errorMessage as string | undefined,
       createdAt: doc.createdAt as Date,
       updatedAt: doc.updatedAt as Date,

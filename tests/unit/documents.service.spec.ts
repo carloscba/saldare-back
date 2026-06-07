@@ -94,7 +94,9 @@ describe('DocumentsService', () => {
         mimeType: 'application/pdf',
         fileSize: 1024,
         status: 'COMPLETED',
-        extractedFields: [{ label: 'total', value: '100', confidence: 0.95 }],
+        extractedFields: {
+          tables: [{ headers: ['Item', 'Qty'], rows: [['Widget', '10']] }],
+        },
         rawResponse: { data: 'ok' },
         errorMessage: null,
         ttlDays: 30,
@@ -103,7 +105,7 @@ describe('DocumentsService', () => {
         deletedAt: null,
       });
       mockDocumentAi.processDocument.mockResolvedValue({
-        extractedFields: [{ label: 'total', value: '100', confidence: 0.95 }],
+        tables: [{ headers: ['Item', 'Qty'], rows: [['Widget', '10']] }],
         rawResponse: { data: 'ok' },
       });
 

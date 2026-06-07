@@ -26,7 +26,7 @@ const mockPrisma = {
 
 const mockDocAiClient = {
   processDocument: jest.fn().mockResolvedValue({
-    extractedFields: [],
+    tables: [],
     rawResponse: {},
   }),
 };
