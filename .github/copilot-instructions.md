@@ -3,7 +3,7 @@ For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan.
 
 ## Active Plan
-The active feature plan is at `specs/006-company-doc-access/plan.md` — read it for implementation guidance on the Control de Acceso a Documentos por Compañía feature.
+The active feature plan is at `specs/007-document-ai-table-extraction/plan.md` — read it for implementation guidance on the Document AI Table Extraction Refactoring feature.
 
 ## Project Constitution
 This project follows a formal Constitution that governs architecture, tech stack, and security decisions.
