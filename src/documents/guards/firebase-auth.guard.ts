@@ -9,8 +9,7 @@ import * as admin from 'firebase-admin';
 let initialized = false;
 function ensureInitialized() {
   if (!initialized) {
-    const projectId =
-      process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
+    const projectId = process.env.GOOGLE_CLOUD_PROJECT;
     admin.initializeApp({ projectId });
     initialized = true;
   }

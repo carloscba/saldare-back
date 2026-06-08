@@ -20,7 +20,7 @@
 
 **Purpose**: Create module directory structure
 
-- [ ] T001 Create module directory structure: `src/movements/` and `src/movements/dto/`
+- [x] T001 Create module directory structure: `src/movements/` and `src/movements/dto/`
 
 ---
 
@@ -30,13 +30,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 Add Movement model to `prisma/schema.prisma` (fields: id, documentId, movementDate @db.Date, description, amount @db.Decimal(15,2), category, createdAt, updatedAt, deletedAt, plus indexes on documentId and deletedAt)
-- [ ] T003 Add `movements Movement[]` reverse relation to Document model in `prisma/schema.prisma`
-- [ ] T004 Generate and apply Prisma migration: `npx prisma migrate dev --name add-movement-table`
-- [ ] T005 [P] Create MovementResponseDto with all fields (id, documentId, movementDate, description, amount, category, createdAt, updatedAt, deletedAt) in `src/movements/dto/movement-response.dto.ts`
-- [ ] T006 [P] Create PaginatedResponseDto generic class (items, total, page, limit, totalPages) in `src/movements/dto/paginated-response.dto.ts`
-- [ ] T007 Create MovementsService skeleton with PrismaService injection and a private `toResponseDto()` mapper method in `src/movements/movements.service.ts`
-- [ ] T008 Create MovementsModule importing nothing (PrismaService is @Global) and registering MovementsService in `src/movements/movements.module.ts`
+- [x] T002 Add Movement model to `prisma/schema.prisma` (fields: id, documentId, movementDate @db.Date, description, amount @db.Decimal(15,2), category, createdAt, updatedAt, deletedAt, plus indexes on documentId and deletedAt)
+- [x] T003 Add `movements Movement[]` reverse relation to Document model in `prisma/schema.prisma`
+- [x] T004 Generate and apply Prisma migration: `npx prisma migrate dev --name add-movement-table`
+- [x] T005 [P] Create MovementResponseDto with all fields (id, documentId, movementDate, description, amount, category, createdAt, updatedAt, deletedAt) in `src/movements/dto/movement-response.dto.ts`
+- [x] T006 [P] Create PaginatedResponseDto generic class (items, total, page, limit, totalPages) in `src/movements/dto/paginated-response.dto.ts`
+- [x] T007 Create MovementsService skeleton with PrismaService injection and a private `toResponseDto()` mapper method in `src/movements/movements.service.ts`
+- [x] T008 Create MovementsModule importing nothing (PrismaService is @Global) and registering MovementsService in `src/movements/movements.module.ts`
 
 **Checkpoint**: Foundation ready — database migrated, shared DTOs and module skeleton in place. User story implementation can now begin.
 
@@ -52,13 +52,13 @@
 
 > Write these tests FIRST, ensure they FAIL before implementation.
 
-- [ ] T009 [P] [US1] Unit test: MovementsService.create() success path and error cases (document not found, not COMPLETED, future date, non-member) in `src/movements/movements.service.spec.ts`
-- [ ] T010 [P] [US1] E2e test: POST /api/movements — 201 success, 400 validation, 401 no auth, 403 non-member, 404 document not found in `test/movements/movements.e2e-spec.ts`
+- [x] T009 [P] [US1] Unit test: MovementsService.create() success path and error cases (document not found, not COMPLETED, future date, non-member) in `src/movements/movements.service.spec.ts`
+- [x] T010 [P] [US1] E2e test: POST /api/movements — 201 success, 400 validation, 401 no auth, 403 non-member, 404 document not found in `test/movements/movements.e2e-spec.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T011 [P] [US1] Create CreateMovementDto with class-validator decorators (IsDateString, IsString/MaxLength(255), IsNumber, IsOptional/String/MaxLength(255), IsUUID(4)) in `src/movements/dto/create-movement.dto.ts`
-- [ ] T012 [US1] Implement `create(dto: CreateMovementDto, userId: string)` in MovementsService:
+- [x] T011 [P] [US1] Create CreateMovementDto with class-validator decorators (IsDateString, IsString/MaxLength(255), IsNumber, IsOptional/String/MaxLength(255), IsUUID(4)) in `src/movements/dto/create-movement.dto.ts`
+- [x] T012 [US1] Implement `create(dto: CreateMovementDto, userId: string)` in MovementsService:
   - Validate document exists and is not soft-deleted
   - Validate document.status === COMPLETED (FR-007)
   - Validate movementDate is not future (FR-010)
@@ -66,8 +66,8 @@
   - Create movement via `prisma.movement.create()`
   - Return MovementResponseDto with amount as string
   - Throw appropriate exceptions (NotFoundException, ForbiddenException, BadRequestException)
-- [ ] T013 [US1] Create MovementsController with `@UseGuards(FirebaseAuthGuard)` and `@Post()` handler extracting `userId` from `request.user.uid`, calling service.create(), returning 201 in `src/movements/movements.controller.ts`
-- [ ] T014 [US1] Register MovementsController in MovementsModule controllers array and import MovementsModule in `src/app.module.ts`
+- [x] T013 [US1] Create MovementsController with `@UseGuards(FirebaseAuthGuard)` and `@Post()` handler extracting `userId` from `request.user.uid`, calling service.create(), returning 201 in `src/movements/movements.controller.ts`
+- [x] T014 [US1] Register MovementsController in MovementsModule controllers array and import MovementsModule in `src/app.module.ts`
 
 **Checkpoint**: User Story 1 fully functional — can create a single movement with all validation and access control. MVP ready.
 
@@ -81,19 +81,19 @@
 
 ### Tests for User Story 2
 
-- [ ] T015 [P] [US2] Unit test: MovementsService.findAll() — paginated results, empty list, non-member access denied in `src/movements/movements.service.spec.ts`
-- [ ] T016 [P] [US2] E2e test: GET /api/movements — 200 paginated, 200 empty, 403 non-member, 404 document not found, 400 invalid params in `test/movements/movements.e2e-spec.ts`
+- [x] T015 [P] [US2] Unit test: MovementsService.findAll() — paginated results, empty list, non-member access denied in `src/movements/movements.service.spec.ts`
+- [x] T016 [P] [US2] E2e test: GET /api/movements — 200 paginated, 200 empty, 403 non-member, 404 document not found, 400 invalid params in `test/movements/movements.e2e-spec.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T017 [P] [US2] Create MovementListQueryDto with class-validator decorators (IsUUID(4) on documentId, IsOptional/IsInt/Min(1) on page default 1, IsOptional/IsInt/Min(1)/Max(100) on limit default 20, with @Type(() => Number)) in `src/movements/dto/movement-list-query.dto.ts`
-- [ ] T018 [US2] Implement `findAll(query: MovementListQueryDto, userId: string)` in MovementsService:
+- [x] T017 [P] [US2] Create MovementListQueryDto with class-validator decorators (IsUUID(4) on documentId, IsOptional/IsInt/Min(1) on page default 1, IsOptional/IsInt/Min(1)/Max(100) on limit default 20, with @Type(() => Number)) in `src/movements/dto/movement-list-query.dto.ts`
+- [x] T018 [US2] Implement `findAll(query: MovementListQueryDto, userId: string)` in MovementsService:
   - Validate document exists and is not soft-deleted
   - Validate company membership (same pattern as create)
   - Query `prisma.movement.findMany()` with `where: { documentId, deletedAt: null }`, `orderBy: { movementDate: 'desc' }`, `skip`/`take` for pagination
   - Run `prisma.movement.count()` with same where for total
   - Return `{ items: MovementResponseDto[], total, page, limit, totalPages }`
-- [ ] T019 [US2] Add `@Get()` handler to MovementsController using `@Query(ValidationPipe)` to receive MovementListQueryDto, calling service.findAll(), returning 200
+- [x] T019 [US2] Add `@Get()` handler to MovementsController using `@Query(ValidationPipe)` to receive MovementListQueryDto, calling service.findAll(), returning 200
 
 **Checkpoint**: User Stories 1 AND 2 both functional — can create and list movements for a document.
 
@@ -107,21 +107,21 @@
 
 ### Tests for User Story 3
 
-- [ ] T020 [P] [US3] Unit test: MovementsService.batchCreate() — success, atomic rollback on invalid item, batch >100 rejected in `src/movements/movements.service.spec.ts`
-- [ ] T021 [P] [US3] E2e test: POST /api/movements/batch — 201 success, 400 validation/atomicity, 400 exceeding 100 limit, 403 non-member in `test/movements/movements.e2e-spec.ts`
+- [x] T020 [P] [US3] Unit test: MovementsService.batchCreate() — success, atomic rollback on invalid item, batch >100 rejected in `src/movements/movements.service.spec.ts`
+- [x] T021 [P] [US3] E2e test: POST /api/movements/batch — 201 success, 400 validation/atomicity, 400 exceeding 100 limit, 403 non-member in `test/movements/movements.e2e-spec.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T022 [P] [US3] Create CreateMovementItemDto with class-validator decorators (IsDateString, IsString/MaxLength(255), IsNumber, IsOptional/String/MaxLength(255)) — same as CreateMovementDto but without documentId — in `src/movements/dto/create-movement-item.dto.ts`
-- [ ] T023 [P] [US3] Create BatchCreateMovementsDto with IsUUID(4) documentId and IsArray/ValidateNested({each: true})/ArrayMinSize(1)/ArrayMaxSize(100)/@Type(() => CreateMovementItemDto) movements in `src/movements/dto/batch-create-movements.dto.ts`
-- [ ] T024 [US3] Implement `batchCreate(dto: BatchCreateMovementsDto, userId: string)` in MovementsService:
+- [x] T022 [P] [US3] Create CreateMovementItemDto with class-validator decorators (IsDateString, IsString/MaxLength(255), IsNumber, IsOptional/String/MaxLength(255)) — same as CreateMovementDto but without documentId — in `src/movements/dto/create-movement-item.dto.ts`
+- [x] T023 [P] [US3] Create BatchCreateMovementsDto with IsUUID(4) documentId and IsArray/ValidateNested({each: true})/ArrayMinSize(1)/ArrayMaxSize(100)/@Type(() => CreateMovementItemDto) movements in `src/movements/dto/batch-create-movements.dto.ts`
+- [x] T024 [US3] Implement `batchCreate(dto: BatchCreateMovementsDto, userId: string)` in MovementsService:
   - Validate document exists, not soft-deleted, status === COMPLETED
   - Validate company membership
   - Pre-validate all items (future dates, required fields)
   - Wrap all creates in `prisma.$transaction()` for atomicity
   - Return array of MovementResponseDto
   - Throw BadRequestException on any item validation failure (no partial save)
-- [ ] T025 [US3] Add `@Post('batch')` handler to MovementsController using `@Body(ValidationPipe)` to receive BatchCreateMovementsDto, calling service.batchCreate(), returning 201
+- [x] T025 [US3] Add `@Post('batch')` handler to MovementsController using `@Body(ValidationPipe)` to receive BatchCreateMovementsDto, calling service.batchCreate(), returning 201
 
 **Checkpoint**: All user stories functional — create, list, and batch-create movements.
 
@@ -132,9 +132,9 @@
 **Purpose**: Validation and quality assurance across all stories
 
 - [ ] T026 Run quickstart.md validation — execute all curl examples against local server, verify each response matches expected output
-- [ ] T027 [P] Run ESLint: `npx eslint src/movements/ --ext .ts` and fix any issues
-- [ ] T028 [P] Run TypeScript typecheck: `npx tsc --noEmit` and fix any type errors
-- [ ] T029 Run all tests: `npm test` and verify all pass
+- [x] T027 [P] Run ESLint: `npx eslint src/movements/ --ext .ts` and fix any issues
+- [x] T028 [P] Run TypeScript typecheck: `npx tsc --noEmit` and fix any type errors
+- [x] T029 Run all tests: `npm test` and verify all pass
 
 ---
 
