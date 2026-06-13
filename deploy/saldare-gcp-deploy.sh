@@ -631,7 +631,7 @@ step8_deploy_cloud_run() {
     --max-instances=2 \
     --min-instances=0 \
     --concurrency=80 \
-    --no-allow-unauthenticated \
+    --allow-unauthenticated \
     --service-account="$SA_EMAIL" \
     --add-cloudsql-instances="$INSTANCE_CONNECTION_NAME" \
     --set-env-vars="DATABASE_URL=${db_url}" \
@@ -668,7 +668,7 @@ step8_health_check() {
     local response
     local id_token
     id_token=$(gcloud auth print-identity-token 2>/dev/null)
-    response=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${id_token}" "${SERVICE_URL}/health" 2>/dev/null || echo "000")
+    response=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${id_token}" "${SERVICE_URL}/api/health" 2>/dev/null || echo "000")
 
     if [[ "$response" == "200" ]]; then
       log_ok "Health check passed (HTTP $response)"

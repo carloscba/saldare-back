@@ -1,0 +1,3 @@
+# Movements
+
+El objetivo de la aplicación es parsear movimientos bancarios de archivos PDF. Hasta ahora ya logramos el upload del archivo vinculado a una company. Ahora vamos a trabajar en el guardado de los movimientos. Vamos a crear un nuevo endpoint que nos permita guardar movementDate, description, amount, category y a que documento pertenece ese movimiento. Esta tarea no esta relacionada con el upload y el proceso para extraer los datos. El objetivo es solamente obtener el endpoint para guardar el movimiento. Nuevamente el movimiento solo puede estar visible para los usuarios que tienen permiso sobre la empresa que crea el documento.
